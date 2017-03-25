@@ -170,6 +170,7 @@ check_embedded_art(const char *path, uint8_t *image_data, int image_size)
 	static unsigned int last_hash = 0;
 	static int last_success = 0;
 	unsigned int hash;
+	DPRINTF(E_DEBUG, L_METADATA, " checking embedded art: '%s' = %p\n", path, image_data);
 
 	if( !image_data || !image_size || !path )
 	{
@@ -271,6 +272,7 @@ check_for_album_file(const char *path)
 	const char *dir;
 	struct stat st;
 	int ret;
+	DPRINTF(E_DEBUG, L_METADATA, " checking album art file: '%s'\n", path);
 
 	if( stat(path, &st) != 0 )
 		return NULL;
@@ -286,6 +288,7 @@ check_for_album_file(const char *path)
 	/* First look for file-specific cover art */
 	snprintf(file, sizeof(file), "%s.cover.jpg", path);
 	ret = access(file, R_OK);
+	DPRINTF(E_DEBUG, L_METADATA, " 	 file: '%s' = %i\n", file, ret);
 	if( ret != 0 )
 	{
 		strncpyt(file, path, sizeof(file));
@@ -294,6 +297,7 @@ check_for_album_file(const char *path)
 		{
 			strcpy(p, ".jpg");
 			ret = access(file, R_OK);
+			DPRINTF(E_DEBUG, L_METADATA, " 	 file: '%s' = %i\n", file, ret);
 		}
 		if( ret != 0 )
 		{
@@ -303,6 +307,7 @@ check_for_album_file(const char *path)
 				memmove(p+2, p+1, file+MAXPATHLEN-p-2);
 				p[1] = '.';
 				ret = access(file, R_OK);
+				DPRINTF(E_DEBUG, L_METADATA, " 	 file: '%s' = %i\n", file, ret);
 			}
 		}
 	}
@@ -320,7 +325,9 @@ check_dir:
 	for( album_art_name = album_art_names; album_art_name; album_art_name = album_art_name->next )
 	{
 		snprintf(file, sizeof(file), "%s/%s", dir, album_art_name->name);
-		if( access(file, R_OK) == 0 )
+		ret = access(file, R_OK);
+		DPRINTF(E_DEBUG, L_METADATA, " 	 file: '%s' = %i\n", file, ret);
+		if (ret == 0 )
 		{
 			if( art_cache_exists(file, &art_file) )
 			{

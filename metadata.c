@@ -1497,10 +1497,20 @@ video_no_dlna:
 
 	strcpy(nfo, path);
 	ext = strrchr(nfo, '.');
+	DPRINTF(E_DEBUG, L_METADATA, " nfo extension: '%s' [%s]\n", ext, path);
+
 	if( ext )
 	{
 		strcpy(ext+1, "nfo");
-		if( access(nfo, F_OK) == 0 )
+		int canAccess = access(nfo, F_OK);
+		DPRINTF(E_DEBUG, L_METADATA, " nfo text: '%s' = %i\n", nfo, canAccess);
+		if(canAccess != 0 )
+		{
+			strcpy(ext+1, "xml");
+			canAccess = access(nfo, F_OK);
+			DPRINTF(E_DEBUG, L_METADATA, " nfo text: '%s' = %i\n", nfo, canAccess);
+		}
+		if (canAccess == 0)
 		{
 			parse_nfo(nfo, &m);
 		}
