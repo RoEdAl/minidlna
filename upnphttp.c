@@ -116,6 +116,12 @@ New_upnphttp(int s)
 	return ret;
 }
 
+long long detailIDfromFilename(char* filename)
+{
+	// filename looks like <detailID>_<timestamp>.jpg (created via COLUMNS in upnpsoap.c)
+	// strtoll() will stop at _ so no extra work is required
+	return strtoll(filename, NULL, 10);
+}
 void
 CloseSocket_upnphttp(struct upnphttp * h)
 {
@@ -1451,7 +1457,7 @@ SendResp_albumArt(struct upnphttp * h, char * object)
 		return;
 	}
 
-	id = strtoll(object, NULL, 10);
+	id = detailIDfromFilename(object);
 
 	path = sql_get_text_field(db, "SELECT PATH from ALBUM_ART where ID = '%lld'", id);
 	if( !path )
@@ -1501,7 +1507,7 @@ SendResp_caption(struct upnphttp * h, char * object)
 	int fd;
 	struct string_s str;
 
-	id = strtoll(object, NULL, 10);
+	id = detailIDfromFilename(object);
 
 	path = sql_get_text_field(db, "SELECT PATH from CAPTIONS where ID = %lld", id);
 	if( !path )
@@ -1556,7 +1562,7 @@ SendResp_thumbnail(struct upnphttp * h, char * object)
 		return;
 	}
 
-	id = strtoll(object, NULL, 10);
+	id = detailIDfromFilename(object);
 	path = sql_get_text_field(db, "SELECT PATH from DETAILS where ID = '%lld'", id);
 	if( !path )
 	{
@@ -1628,7 +1634,7 @@ SendResp_resizedimg(struct upnphttp * h, char * object)
 	int scale = 1;
 	const char *tmode;
 
-	id = strtoll(object, &saveptr, 10);
+	id = detailIDfromFilename(object);
 	snprintf(buf, sizeof(buf), "SELECT PATH, RESOLUTION, ROTATION from DETAILS where ID = '%lld'", (long long)id);
 	ret = sql_get_table(db, buf, &result, &rows, NULL);
 	if( ret != SQLITE_OK )
@@ -1650,8 +1656,7 @@ SendResp_resizedimg(struct upnphttp * h, char * object)
 		return;
 	}
 
-	if( saveptr )
-		saveptr = strchr(saveptr, '?');
+	saveptr = strchr(object, '?');
 	path = saveptr ? saveptr + 1 : object;
 	for( item = strtok_r(path, "&,", &saveptr); item != NULL; item = strtok_r(NULL, "&,", &saveptr) )
 	{
@@ -1859,7 +1864,7 @@ SendResp_dlnafile(struct upnphttp *h, char *object)
 	pid_t newpid = 0;
 #endif
 
-	id = strtoll(object, NULL, 10);
+	id = detailIDfromFilename(object);
 	if( cflags & FLAG_MS_PFS )
 	{
 		if( strstr(object, "?albumArt=true") )

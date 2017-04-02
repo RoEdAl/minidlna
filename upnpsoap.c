@@ -761,7 +761,10 @@ object_exists(const char *object)
 	return (ret > 0);
 }
 
-#define COLUMNS "o.DETAIL_ID, o.CLASS," \
+// using o.DETAIL_ID || '_' || strfttime('%%s',d.DATE) will generate IDs like 123_234234234
+// these IDs are distinct as soon as a rescan happens, invalidating possible client caches
+// the ID is then parsed in upnphttp.c using strtoll() which will stop at '_' and ignore the rest 
+#define COLUMNS "o.DETAIL_ID || '_' || strftime('%%s',d.DATE) , o.CLASS," \
                 " d.SIZE, d.TITLE, d.DURATION, d.BITRATE, d.SAMPLERATE, d.ARTIST," \
                 " d.ALBUM, d.GENRE, d.COMMENT, d.CHANNELS, d.TRACK, d.DATE, d.RESOLUTION," \
                 " d.THUMBNAIL, d.CREATOR, d.DLNA_PN, d.MIME, d.ALBUM_ART, d.ROTATION, d.DISC "
@@ -1084,7 +1087,8 @@ callback(void *args, int argc, char **argv, char **azColName)
 				                   "http://%s:%d/AlbumArt/%s-%s.jpg"
 				                   "&lt;/res&gt;",
 				                   lan_addr[passed_args->iface].str, runtime_vars.port, album_art, detailID);
-			} else if( passed_args->filter & FILTER_UPNP_ALBUMARTURI ) {
+			};
+			if( passed_args->filter & FILTER_UPNP_ALBUMARTURI ) {
 				ret = strcatf(str, "&lt;upnp:albumArtURI");
 				if( passed_args->filter & FILTER_UPNP_ALBUMARTURI_DLNA_PROFILEID ) {
 					ret = strcatf(str, " dlna:profileID=\"JPEG_TN\" xmlns:dlna=\"urn:schemas-dlna-org:metadata-1-0/\"");
